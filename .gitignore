@@ -1,0 +1,5 @@
+*.ipynb
+*.pyc
+*.gz
+*.pt
+*.wav
