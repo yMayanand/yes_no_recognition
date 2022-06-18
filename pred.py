@@ -2,7 +2,7 @@ import torch
 from model import Model
 
 model = Model()
-state_dict = torch.load('checkpoint0.pt')
+state_dict = torch.load('checkpoint1.pt')
 model.load_state_dict(state_dict['model_state'])
 
 idx2val = {0: 'NO', 1: 'YES', 2: 'EPSILON'}

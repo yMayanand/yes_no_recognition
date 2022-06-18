@@ -5,31 +5,40 @@ from glob import glob
 import tarfile
 import torchaudio
 from urllib import request
+import math
 
 class Dataset(torch.utils.data.Dataset):
     """creating YES and NO Dataset
     """
     URL = 'http://www.openslr.org/resources/1/waves_yesno.tar.gz'
 
-    def __init__(self, root, tfms=None, download=True):
+    def __init__(self, root, train_tfms=None, val_tfms=None,
+                 download=True, split=0.33, train=True):
         super().__init__()
 
-        self.tfms = tfms
+        self.train_tfms = train_tfms
+        self.val_tfms = val_tfms
+        self.split = split
+        self.train = train
         self.path = os.path.join(root, 'yesno.tar.gz')
         self.ext_dest = os.path.join(root, 'waves_yesno')
         if download:
             self.download_dataset(self.URL, self.path)
         self.extract_data(self.path)
         self.file_list = glob(f'{self.ext_dest}/*.wav')
+        self.train_len = math.floor(self.split*len(self.file_list))
+        self.val_len = len(self.file_list) - self.train_len
 
     def __len__(self):
-        return len(self.file_list)
+        return self.train_len if self.train else self.val_len
 
     def __getitem__(self, idx):
+        tfms = self.train_tfms if self.train else self.val_tfms
+        idx = idx if self.train else (idx + self.train_len - 1)
         audio, labels = self.get_training_pairs(idx)
         audio, sr = torchaudio.load(audio)
-        if self.tfms is not None:
-            audio = self.tfms(audio)
+        if tfms is not None:
+            audio = tfms(audio)
         audio = audio - audio.min()
         audio = audio / audio.max()
         labels = torch.tensor(labels)
